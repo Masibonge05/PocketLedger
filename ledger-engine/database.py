@@ -1,15 +1,14 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "postgresql://postgres.xhqvfjhlfpvxnqxbzwvz:Masibonge%40010505@aws-0-eu-west-2.pooler.supabase.com:6543/postgres"
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:password@localhost:5432/pocketledger")
 
-engine = create_engine(DATABASE_URL)
+# For sqlite we need connect_args={"check_same_thread": False}, for pg we don't
+connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
     db = SessionLocal()
