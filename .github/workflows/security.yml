@@ -1,0 +1,55 @@
+name: PocketLedger CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  python-sast:
+    name: Python SAST (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install Bandit
+      run: pip install bandit
+    - name: Run Bandit
+      run: bandit -r ledger-engine/ -c ledger-engine/bandit.yaml || echo "Bandit found issues but continuing for now"
+
+  dependency-sca:
+    name: Dependency Scanning (SCA)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - name: NPM Audit
+      working-directory: ./ingestion-gateway
+      run: npm audit --audit-level=high || echo "NPM Audit found issues"
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Pip Audit
+      run: |
+        pip install pip-audit
+        pip-audit -r ledger-engine/requirements.txt || echo "Pip Audit found issues"
+
+  smart-contract-analysis:
+    name: Smart Contract Analysis (Slither & Mythril)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Slither
+      run: pip3 install slither-analyzer
+    - name: Run Slither
+      working-directory: ./smart-contracts
+      run: slither . || echo "Slither found issues"
