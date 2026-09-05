@@ -1,44 +1,36 @@
 # PocketLedger
 
-**PocketLedger** is a mobile-first financial identity platform for South Africa's informal economy, operating natively inside WhatsApp. The system lets unbanked and underbanked merchants (spaza shops, kota vendors, salons, mobile mechanics) log sales, manage inventory, and issue receipts via voice note or text in English and isiZulu, with zero new apps to install.
+**Financial Identity for Informal Traders**
 
-Every logged action is weighted for reliability by an **Evidence Trust Engine**, compiled into a Business Health Score, and periodically anchored to the Ethereum Sepolia blockchain as a tamper-proof hash. The output is a portable Financial Identity Passport that a merchant can consent-share with lenders, insurers, and suppliers to unlock credit.
+PocketLedger is a WhatsApp-native platform designed to bring financial legibility to the informal economy. Millions of informal micro-enterprises—like spaza shops, street vendors, and township salons—operate entirely in cash. Because they leave no digital footprint, they are functionally invisible to formal financial institutions, meaning working capital, supplier financing, and insurance are routinely denied. 
 
-## Tech Stack
-- **Ingestion layer:** Node.js with Express (Twilio/Meta WhatsApp Business API)
-- **Ledger & Evidence Engine:** Python with FastAPI
-- **Database:** PostgreSQL (SQLAlchemy)
-- **Queue & Rate Limiting:** Celery with RabbitMQ, Redis
-- **AI/ML:** Whisper API (Voice), Google Gemini (Parsing & Advisor)
-- **Blockchain:** Solidity (Ethereum Sepolia), Web3.py
-- **Dashboard:** Streamlit
+PocketLedger solves this by wrapping a financial-recording layer around the tool these merchants already trust and use daily: WhatsApp.
 
-## Architecture
+## How It Works
 
-```text
-[ WhatsApp / Merchant ]
-          │ (TLS 1.3 + Twilio HMAC Signature)
-          ▼
-[ Ingestion Gateway (Node.js/Express) ] ── (ephemeral storage: audio dropped post-transcription)
-          │ (mutual TLS / internal network)
-          ▼
-[ Core Ledger & Evidence Engine (Python/FastAPI) ] ── (AES-256 encrypted Postgres)
-          │
-          ├──► [ Whisper API ] (voice → text)
-          ├──► [ Google Gemini API ] (text → structured transaction JSON)
-          │
-          └──► [ State Hash Generator (SHA-256) ]
-                         │ (one-way hash of merchant_id + health_score + cumulative_revenue)
-                         ▼
-          [ PocketLedgerAnchor.sol on Ethereum Sepolia ]
-                         │
-                         ▼
-          [ Passport Dashboard (Streamlit) ] (lender-facing, consent-gated)
-```
+1. **WhatsApp Native Interface**
+   Merchants interact with PocketLedger entirely through a WhatsApp bot. There are no new apps to download or complex interfaces to learn. They can access a simple, numbered menu to log sales, record stock, or report wastage.
 
-## Running Locally
+2. **Multilingual & Accessible**
+   The platform supports 18 African and international languages. For merchants with low literacy, PocketLedger accepts Voice Notes. Merchants can simply speak their transactions, and the system handles the rest.
 
-1. **Prerequisites**: Docker, Docker Compose
-2. Run `docker-compose up` to start PostgreSQL, Redis, and RabbitMQ dependencies.
-3. Setup environment variables for each service (see `.env.example` in each directory).
-4. Run each service (see individual READMEs for details).
+3. **AI Transaction Parsing**
+   Merchants log transactions in natural language (e.g., "I sold 10 tomatoes for R10 each"). PocketLedger's AI layer instantly extracts the product, quantity, and price, updating the merchant's ledger and inventory in real time.
+
+4. **Business Health Score**
+   Every logged transaction builds the merchant's dynamic Business Health Score. This score proves their business is active and generating consistent revenue, acting as an alternative credit rating.
+
+5. **Multi-Layered Validation & Blockchain Anchoring**
+   To ensure the data is trustworthy for lenders:
+   - **AI Checks:** Validates the plausibility of transactions.
+   - **Receipt Vision:** Merchants can upload photos of supplier receipts, which the AI scans and verifies against their logged stock.
+   - **Blockchain:** Every validated transaction is cryptographically hashed and anchored on-chain via a smart contract. This provides mathematically verified proof that the financial history is immutable and tamper-proof.
+
+6. **The Financial Identity Passport**
+   Merchants can generate professional digital invoices for their customers and pull full financial statements. When applying for loans or supplier financing, this verified statement acts as their "Financial Identity Passport," proving they are a bankable business.
+
+## Project Structure
+
+- **`ledger-engine/`**: The core FastAPI backend. Handles incoming webhooks, natural language parsing, database operations, and blockchain anchoring.
+- **`dashboard/`**: A Streamlit application built for lenders, NGOs, and administrators to view the aggregated, verified data and Business Health Scores of merchants on the platform.
+- **`smart-contracts/`**: Solidity contracts deployed to the blockchain used to anchor transaction hashes and establish a tamper-proof audit trail.
