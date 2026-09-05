@@ -10,11 +10,9 @@ LEDGER_ENGINE_URL = os.environ.get("LEDGER_ENGINE_URL", "http://localhost:8000")
 
 st.title("PocketLedger: Financial Identity Passport")
 
-# Layout with Tabs
 tab1, tab2 = st.tabs(["Lender View (Passport)", "Merchant View (Live Demo Simulator)"])
 
 with tab1:
-    # Mock OAuth Consent Gating
     st.sidebar.header("Lender Authentication")
     oauth_token = st.sidebar.text_input("OAuth 2.0 Token", type="password")
     
@@ -82,9 +80,9 @@ with tab1:
                     if verify_resp.status_code == 200:
                         v_data = verify_resp.json()
                         if v_data.get("is_valid"):
-                            st.success(f"✅ Integrity Verified. Hash: {v_data['live_hash'][:16]}...")
+                            st.success(f"Integrity Verified. Hash: {v_data['live_hash'][:16]}...")
                         else:
-                            st.error("❌ Integrity Verification Failed. Data mismatch.")
+                            st.error("Integrity Verification Failed. Data mismatch.")
                     else:
                         st.error("Verification endpoint failed.")
                 except Exception as e:
@@ -115,7 +113,7 @@ with tab2:
                     st.info(f"New Health Score: {result.get('health_score')}/100")
                     st.info(f"New Evidence Confidence: {result.get('evidence_confidence_pct')}%")
                     
-                    tx_id = result.get("transaction_id", result.get("tx_id", None)) # main.py returns "transaction_id"? Let's check main.py. Wait, main.py doesn't return tx_id currently.
+                    tx_id = result.get("transaction_id")
                     
                     st.markdown(f"**Download Receipt:** [Receipt PDF]({LEDGER_ENGINE_URL}/api/invoice/{tx_id})")
                 else:

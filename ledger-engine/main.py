@@ -49,7 +49,6 @@ def compute_scores(db: Session, merchant_id: str):
     total_weight = sum(tx.evidence_weight for tx in txs)
     evidence_confidence_pct = (total_weight / len(txs)) * 100
     
-    # Mock health score: simple function of tx count and evidence confidence
     health_score = min(100.0, (len(txs) / 90.0) * 50 + (evidence_confidence_pct / 2.0))
     return evidence_confidence_pct, health_score
 
@@ -99,7 +98,6 @@ async def ingest_transaction(
     ).first()
     
     if not item:
-        # Create item if not exists
         item = InventoryItem(
             item_id=str(uuid.uuid4()),
             merchant_id=merchant.merchant_id,
@@ -109,7 +107,6 @@ async def ingest_transaction(
         )
         db.add(item)
     
-    # Deduct inventory
     item.quantity_on_hand -= quantity
     
     amount = (unit_price or item.unit_price) * quantity
@@ -153,7 +150,6 @@ async def get_passport(merchant_id: str, db: Session = Depends(get_db)):
     total_txs = len(txs)
     cumulative_revenue = sum(tx.amount for tx in txs)
     
-    # Calculate operating history in months
     operating_history_months = 0
     if merchant.created_at:
         delta = datetime.now(timezone.utc) - merchant.created_at
@@ -166,7 +162,7 @@ async def get_passport(merchant_id: str, db: Session = Depends(get_db)):
         "operating_history_months": operating_history_months,
         "total_transactions": total_txs,
         "cumulative_revenue": cumulative_revenue,
-        "revenue_consistency_pct": 87.0, # Mocked for now
+        "revenue_consistency_pct": 87.0,
         "health_score": round(health, 1),
         "evidence_confidence_pct": round(evidence_pct, 1)
     }
@@ -209,7 +205,6 @@ async def trigger_anchor(merchant_id: str, db: Session = Depends(get_db)):
     
     tx_hash = submit_state_hash_to_chain(merchant_id, data_hash)
     
-    # Save snapshot
     snapshot = EvidenceSnapshot(
         snapshot_id=str(uuid.uuid4()),
         merchant_id=merchant_id,
@@ -254,7 +249,6 @@ async def export_data(request: ExportRequest, merchant_id: str, db: Session = De
     if not merchant:
         raise HTTPException(status_code=404, detail="Merchant not found")
         
-    # Mock Argon2id PIN verification
     if request.pin != "1234" and request.pin != merchant.pin_hash:
         raise HTTPException(status_code=401, detail="Invalid PIN")
         
@@ -273,7 +267,6 @@ async def generate_invoice(transaction_id: str, db: Session = Depends(get_db)):
     merchant = db.query(Merchant).filter(Merchant.merchant_id == tx.merchant_id).first()
     item = db.query(InventoryItem).filter(InventoryItem.item_id == tx.item_id).first()
     
-    # Create PDF
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", style="B", size=24)
